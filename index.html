@@ -3,28 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Porky Penguins: Cookie Tappers</title>
+  <title>Cookie Taps</title>
   <style>
-    html, body {
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
       margin: 0;
       padding: 0;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
       background-color: black;
+      background-size: cover;
+      background-position: center;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      color: white;
+      overflow: hidden;
     }
 
     #character {
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      display: block;
-      margin: 0 auto;
+      width: 100%;
+      height: auto;
+      max-height: 90vh;
+      object-fit: contain;
       user-select: none;
-      transition: transform 0.2s ease;
+      cursor: pointer;
+      transition: transform 0.1s ease;
     }
 
     .bounce {
-      animation: bounce 0.3s ease;
+      animation: bounce 0.2s ease;
     }
 
     @keyframes bounce {
@@ -32,143 +40,90 @@
         transform: scale(1);
       }
       50% {
-        transform: scale(1.05);
+        transform: scale(1.1);
       }
     }
 
-    #counter, #message, #nickname-display, #leaderboard {
+    #nickname-display,
+    #counter {
       position: absolute;
-      left: 10px;
-      color: white;
-      text-shadow: 1px 1px 2px black;
-      font-size: 18px;
-      z-index: 2;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 22px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 10px 20px;
+      border-radius: 10px;
     }
 
     #counter {
-      top: 10px;
-    }
-
-    #message {
-      top: 40px;
-    }
-
-    #nickname-display {
-      top: 70px;
-    }
-
-    #leaderboard {
-      top: 110px;
-      background-color: rgba(0,0,0,0.5);
-      padding: 10px;
-      border-radius: 8px;
-    }
-
-    #tap-button {
-      position: absolute;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 30px;
-      font-size: 18px;
-      cursor: pointer;
-      border: none;
-      background-color: #ff9800;
-      color: white;
-      border-radius: 8px;
-      z-index: 2;
+      bottom: 20px;
+      font-size: 26px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
 
   <img id="character" src="COOKIE2.png" alt="Character" />
-  <div id="counter">Taps: 0</div>
-  <div id="message"></div>
   <div id="nickname-display"></div>
-  <div id="leaderboard"><strong>Leaderboard</strong><br /></div>
-  <button id="tap-button">Tap Me!</button>
+  <div id="counter">Taps: 0</div>
 
   <script>
-    const stages = [
-      { img: "COOKIE2.png", min: 0, max: 500 },
-      { img: "COOKIE3.png", min: 501, max: 1000 },
-      { img: "COOKIEMAN.png", min: 1001, max: 2000 },
-      { img: "COOKIEMAN2.png", min: 2001, max: 3000 },
-      { img: "COOKIEMAN4.png", min: 3001, max: 4000 },
-      { img: "COOKIEMONSTER.png", min: 4001, max: 5000 },
-      { img: "COOKIEMONSTER2.png", min: 5001, max: 6000 },
-      { img: "COOKIEMONSTER3.png", min: 6001, max: 7000 },
-      { img: "COOKIEASTRONAUT.png", min: 7001, max: 8000 }
-    ];
-
     let tapCount = 0;
-    const character = document.getElementById("character");
-    const counter = document.getElementById("counter");
-    const message = document.getElementById("message");
-    const nicknameDisplay = document.getElementById("nickname-display");
-    const leaderboardDisplay = document.getElementById("leaderboard");
+    const character = document.getElementById('character');
+    const counter = document.getElementById('counter');
+    const nicknameDisplay = document.getElementById('nickname-display');
 
-    const tapSound = new Audio("tap-sound.mp3");
-
-    // Ask for nickname
-    let nickname = localStorage.getItem("nickname");
+    // Prompt for nickname once
+    let nickname = localStorage.getItem('nickname');
     if (!nickname) {
       nickname = prompt("Enter your nickname:");
-      localStorage.setItem("nickname", nickname);
+      if (!nickname) nickname = "Anonymous";
+      localStorage.setItem('nickname', nickname);
     }
-    nicknameDisplay.innerText = `Nickname: ${nickname}`;
+    nicknameDisplay.innerText = nickname;
+
+    // Character & background stages
+    const characterStages = [
+      { min: 0, max: 100, img: "COOKIE2.png" },
+      { min: 101, max: 300, img: "COOKIE3.png" },
+      { min: 301, max: 600, img: "COOKIEMAN.png" },
+      { min: 601, max: 1000, img: "COOKIEMAN2.png" },
+      { min: 1001, max: 2000, img: "COOKIEMAN4.png" },
+      { min: 2001, max: 4000, img: "COOKIEMONSTER.png" },
+      { min: 4001, max: 6000, img: "COOKIEMONSTER2.png" },
+      { min: 6001, max: 7999, img: "COOKIEMONSTER3.png" },
+      { min: 8000, max: 99999, img: "COOKIEASTRONAUT.png" },
+    ];
 
     function updateStage() {
-      const stage = stages.find(s => tapCount >= s.min && tapCount <= s.max);
+      const stage = characterStages.find(s => tapCount >= s.min && tapCount <= s.max);
       if (stage) {
         character.src = stage.img;
-        character.onerror = function () {
-          alert(`Missing image: ${stage.img}`);
-        };
-
-        // Final reward message
-        if (stage.img === "COOKIEASTRONAUT.png") {
-          message.innerText = "🎉 You just earned 10 cookies!";
-        } else {
-          message.innerText = "";
+        character.onerror = () => alert(`Missing image: ${stage.img}`);
+        if (tapCount === 8000) {
+          alert("YOU WON 10 COOKIES!!! 🟤🍪👨‍🚀");
         }
       }
     }
 
-    function updateLeaderboard() {
-      let leaderboard = JSON.parse(localStorage.getItem("leaderboard") || "[]");
-
-      const existing = leaderboard.find(entry => entry.name === nickname);
-      if (existing) {
-        if (tapCount > existing.score) existing.score = tapCount;
-      } else {
-        leaderboard.push({ name: nickname, score: tapCount });
-      }
-
-      leaderboard.sort((a, b) => b.score - a.score);
-      leaderboard = leaderboard.slice(0, 5);
-      localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
-
-      leaderboardDisplay.innerHTML = "<strong>Leaderboard</strong><br />" +
-        leaderboard.map(entry => `${entry.name}: ${entry.score}`).join("<br />");
+    function playTapSound() {
+      const sound = new Audio("tap-sound.mp3");
+      sound.play();
     }
 
     function handleTap() {
       tapCount++;
       counter.innerText = `Taps: ${tapCount}`;
+      character.classList.add('bounce');
+      setTimeout(() => character.classList.remove('bounce'), 200);
+      playTapSound();
       updateStage();
-      updateLeaderboard();
-
-      tapSound.currentTime = 0;
-      tapSound.play();
-
-      character.classList.add("bounce");
-      setTimeout(() => character.classList.remove("bounce"), 300);
     }
 
-    document.getElementById("tap-button").addEventListener("click", handleTap);
-    character.addEventListener("click", handleTap); // Tapping the image also counts
+    character.addEventListener('click', handleTap);
   </script>
+
 </body>
 </html>
